@@ -7,7 +7,7 @@
         <div>{{curLocation.address}}</div>
       </div>
       <div id="weather-updates">
-        <span @click="[getTime(),getDate(),getPosition(),getAddress(),getFoodIndi(),getWeather()]">
+        <span @click="[getTime(),getDate(),getPosition(),getAddress(),getWeather(),getFoodIndi()]">
           <img src='@/assets/etc/reload.png'>
         </span>
         <div>업데이트 {{time.hour+":"+time.minute}}</div>
@@ -60,11 +60,16 @@
       />
     </div>
   </div>
+
+  <div class="test">
+    <button @click="[getNcstWeather(),console.log(postWeather)]">날씨 가져오기</button>
+  </div>
 </template>
 
 <script>
 import tWeather from '@/components/timeWeather.vue'
-import { getAdd, showFoodIndi, getUltraFcst, getVilageFcst, getUltraNcst } from '@/api/index';
+import { getAdd, showFoodIndi, getUltraFcst, getVilageFcst } from '@/api/index';
+import { getUltraNcst } from '@/api/index';
 import { postWeather } from '@/api/index';
 
 export default {
@@ -124,45 +129,52 @@ export default {
       this.time.minute = ('0' + time.getMinutes()).slice(-2);
     }, //getTime(hh:mm)
     getPosition() {
-      if(!("geolocation" in navigator)) {
-        this.curLocation.address = 'Geolocation is not available';
-        return;
-      }
-      this.curLocation.address = 'Locating...';
+      return new Promise(resolve => {
+        if(!("geolocation" in navigator)) {
+          this.curLocation.address = 'Geolocation is not available';
+          return;
+        }
+        this.curLocation.address = 'Locating...';
 
-      navigator.geolocation.getCurrentPosition(async pos => {
-        this.curLocation.latitude=pos.coords.latitude;
-        this.curLocation.longitude=pos.coords.longitude;
-        this.curLocation.latitude.toString();
-        this.curLocation.longitude.toString();
-        //console.log(this.pos);
-      }, err => {
-        this.curLocation.address = err.message;
-      },
-      );
+        navigator.geolocation.getCurrentPosition(pos => {
+          this.curLocation.latitude = pos.coords.latitude.toString();
+          this.curLocation.longitude = pos.coords.longitude.toString();
+          resolve();
+        }, err => {
+          this.curLocation.address = err.message;
+        },
+        );
+      })
+      
     }, //getPosition
     getAddress(){
-      getAdd(this.curLocation.longitude, this.curLocation.latitude)
-      .then(async response=>{
-        this.curLocation.address = await response.data.documents[0].region_2depth_name+" "+response.data.documents[0].region_3depth_name;
-        // 검색 안되는 동이 있어서 시군구까지만 받아오기
-        this.curLocation.code = await (response.data.documents[0].code).slice(0,5)+"00000";
+      return new Promise(resolve => {
+        getAdd(this.curLocation.longitude, this.curLocation.latitude)
+        .then(response=>{
+          this.curLocation.address = response.data.documents[0].region_2depth_name+
+          " "+response.data.documents[0].region_3depth_name;
+          this.curLocation.code = (response.data.documents[0].code).slice(0,5)+"00000";
+          resolve();
+        })
+        .catch(error => console.log(error.response))
       })
-      .catch(error => console.log(error.response))
     }, //getAddress
     getFoodIndi() {
-      showFoodIndi(this.curLocation.code,(this.time.hour<='05'?this.date.yesterday:this.date.today)+'06')
-        .then(response => {
-          let parse_item = response.data.response.body.items.item[0];
-          this.foodIndi.fiScore = (this.time.hour<='05')?parse_item.tomorrow:parse_item.today;
+      return new Promise(resolve => {
+        showFoodIndi(this.curLocation.code,(this.time.hour<='05'?this.date.yesterday:this.date.today)+'06')
+          .then(response => {
+            let parse_item = response.data.response.body.items.item[0];
+            this.foodIndi.fiScore = (this.time.hour<='05')?parse_item.tomorrow:parse_item.today;
 
-          if(this.foodIndi.fiScore<'55'){ this.foodIndi.level = "관심";
-          } else if(this.foodIndi.fiScore<'71'){ this.foodIndi.level = "주의";
-          } else if(this.foodIndi.fiScore<'86'){ this.foodIndi.level = "경고";
-          } else{ this.foodIndi.level = "위험";
-          }
-        })
-        .catch(error => console.log(error));
+            if(this.foodIndi.fiScore<'55'){ this.foodIndi.level = "관심";
+            } else if(this.foodIndi.fiScore<'71'){ this.foodIndi.level = "주의";
+            } else if(this.foodIndi.fiScore<'86'){ this.foodIndi.level = "경고";
+            } else{ this.foodIndi.level = "위험";
+            }
+            resolve();
+          })
+          .catch(error => console.log(error));
+      })
     }, //getFoodIndi
     getXYcoor(v1,v2){
       // LCC DFS 좌표변환을 위한 기초 자료
@@ -200,62 +212,64 @@ export default {
       theta *= sn;
       rs['x'] = Math.floor(ra * Math.sin(theta) + XO + 0.5);
       rs['y'] = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+
       return rs;
     }, //getXYcoor (위경도 -> xy좌표)
-    async getWeather() {
+    getWeather() {
       let rs = this.getXYcoor(this.curLocation.latitude, this.curLocation.longitude);
 
       let parse_item='';
-      let time=this.time.hour+'30';
-      let date=this.date.today;
+      let time = this.time.minute<'45'?(this.time.hour==='00'?'2330':this.time.hour-1+'30'):this.time.hour+'30';
+      let date = this.time.minute<'45'&&this.time.hour==='00'?this.date.yesterday:this.date.today;
 
-      if(this.time.minute<'45'){ 
-        if(this.time.hour==='00'){
-          time='2330';
-          date=this.date.yesterday;
-        }else{
-          time=this.time.hour-1+'30';
-        }
-      }
+      return new Promise(resolve => {
+        getUltraFcst(date, time, rs.x, rs.y)
+          .then(async response => {
+            if(response.data.response.header.resultCode!=='00'){
+              console.log(`ERROR: ${response.data.response.header.resultMsg}`);
+            }
+            parse_item = await response.data.response.body.items.item;
+            for(let i=0;i<6;i++){
+              this.weather.time[i] = parse_item[i+24].fcstTime;
+              this.weather.t1h[i] = parse_item[i+24].fcstValue;
+              this.weather.sky[i] = parse_item[i+18].fcstValue;
+              this.weather.pty[i] = parse_item[i+6].fcstValue;
+            }
+          })
+          .catch(error => console.log(error));
+        
+        date = this.time.hour<='05'?this.date.yesterday:this.date.today;
+        getVilageFcst(date, '0200', rs.x, rs.y)
+          .then(async response => {
+            if(response.data.response.header.resultCode!=='00'){
+              console.log(`ERROR: ${response.data.response.header.resultMsg}`);
+            }
+            parse_item = await response.data.response.body.items.item;
+            let parse_tmx = parse_item.filter(function(obj){ return obj["category"]==="TMX"; });
+            let parse_tmn = parse_item.filter(function(obj){ return obj["category"]==="TMN"; });
 
-      getUltraFcst(date, time, rs.x, rs.y)
+            let idx = (this.time.hour<='05'?1:0);
+            this.weather.tmn = parse_tmn[idx].fcstValue.slice(0,2);
+            this.weather.tmx = parse_tmx[idx].fcstValue.slice(0,2);
+            //console.log(this.weather);
+          })
+          .catch(error => console.log(error));
+
+        resolve;
+      })
+    }, //getWeather
+    getNcstWeather(){
+      let rs = this.getXYcoor(this.curLocation.latitude, this.curLocation.longitude);
+
+      let parse_item='';
+      let time = this.time.minute<'40'?(this.time.hour==='00'?'2330':this.time.hour-1+'30'):this.time.hour+'30';
+      let date = this.time.minute<'40'&&this.time.hour==='00'?this.date.yesterday:this.date.today;
+
+      getUltraNcst(date, time, rs.x, rs.y)
         .then(response => {
-          if(response.data.response.header.resultCode!=='00'){
+          /*if(response.data.response.header.resultCode!=='00'){
             console.log(`ERROR: ${response.data.response.header.resultMsg}`);
-          }
-          parse_item = response.data.response.body.items.item;
-
-          for(let i=0;i<6;i++){
-            this.weather.time[i] = parse_item[i+24].fcstTime;
-            this.weather.t1h[i] = parse_item[i+24].fcstValue;
-            this.weather.sky[i] = parse_item[i+18].fcstValue;
-            this.weather.pty[i] = parse_item[i+6].fcstValue;
-          }
-        })
-        .catch(error => console.log(error));
-
-      date = this.time.hour<='05'?this.date.yesterday:this.date.today;
-      await getVilageFcst(date, '0200', rs.x, rs.y)
-        .then(response => {
-          if(response.data.response.header.resultCode!=='00'){
-            console.log(`ERROR: ${response.data.response.header.resultMsg}`);
-          }
-          parse_item = response.data.response.body.items.item;
-          let parse_tmx = parse_item.filter(function(obj){ return obj["category"]==="TMX"; });
-          let parse_tmn = parse_item.filter(function(obj){ return obj["category"]==="TMN"; });
-
-          let idx = (this.time.hour<='05'?1:0);
-          this.weather.tmn = parse_tmn[idx].fcstValue.slice(0,2);
-          this.weather.tmx = parse_tmx[idx].fcstValue.slice(0,2);
-          //console.log(this.weather);
-        })
-        .catch(error => console.log(error));
-
-      await getUltraNcst(date, time, rs.x, rs.y)
-        .then(response => {
-          if(response.data.response.header.resultCode!=='00'){
-            console.log(`ERROR: ${response.data.response.header.resultMsg}`);
-          }
+          }*/
           parse_item = response.data.response.body.items.item;
           this.postWeatherData.avgRhm = parseFloat(parse_item[1].obsrValue);
           this.postWeatherData.sumRn = parseFloat(parse_item[2].obsrValue);
@@ -265,8 +279,8 @@ export default {
         .catch(error => console.log(error));
       this.postWeatherData.lowTa = parseFloat(this.weather.tmn);
       this.postWeatherData.highTa = parseFloat(this.weather.tmx);
-
-    }, //getWeather
+      console.log(this.postWeatherData);
+    },
     pushWeather(){
       postWeather(JSON.stringify(this.postWeatherData))
         .then(response => {
@@ -275,19 +289,23 @@ export default {
         })
         .catch(error => console.log(error));
     },
+    async Initialize(){
+      await this.getPosition()
+      await this.getAddress()
+      await this.getFoodIndi()
+      await this.getWeather()
+    },
   }, //methods
-  created() {
-    this.getPosition();
+  created() { //mounted랑 머가 다른지 모르게따,,,
     this.getDate();
     this.getTime();
+    this.Initialize();
   },
   mounted(){
-    //this.getWeather();
-    //this.getAddress();
-    //this.getFoodIndi();
-
+    //this.getNcstWeather();
     //this.pushWeather();
   },
+  /*
   watch: {
     curLocation:{
       deep:true,
@@ -299,7 +317,7 @@ export default {
     'curLocation.code'(){
       this.getFoodIndi();
     }
-  },
+  },*/
 };
 
 </script>
