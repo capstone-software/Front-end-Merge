@@ -1,4 +1,4 @@
-# foodcomponent
+# food_poison_prevention
 
 ## Project setup
 ```

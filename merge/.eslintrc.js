@@ -12,9 +12,6 @@ module.exports = {
   },
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-     "vue/multi-word-component-names":["error",{
-      "ignores":['Detail',"Probability","Home",'Norovirus' ]
-    }]
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
   }
 }
