@@ -17,14 +17,15 @@
 </template>
 
 <script>
-import Chart from "chart.js/auto";
 import { postWeather } from '@/api/index';
+import Chart from "chart.js/auto";
+let pieChart;
 
 export default {
   name: "foodPoisoning",
   data() {
     return {
-      poisoning_value:[10,10,10,50,10], // 살모넬라, 병원성대장균, 노로바이러스, 캠필로박터제주니, 클로스트리디움퍼프린젠스 
+      poisoning_value:[0,0,0,0,0], // 살모넬라, 병원성대장균, 노로바이러스, 캠필로박터제주니, 클로스트리디움퍼프린젠스 
       poisoning_label:[
         '살모넬라',
         '병원성대장균',
@@ -48,9 +49,13 @@ export default {
       postWeather(JSON.stringify(weatherData))
         .then(response => {
           // 반환되는 값
-          console.log(response.status);
-          console.log(response.data);
-          //this.poisoning_value = response.data;
+          if(response.status==200){
+            this.poisoning_value = response.data.floatList;
+            pieChart.data.datasets.data = this.poisoning_value;
+            //if(pieChart !== undefined){pieChart.destroy();}
+            //pieChart.update();
+          }
+          console.log(this.poisoning_value);
         })
         .catch(error => console.log(error));
     })
@@ -61,23 +66,23 @@ export default {
     },
     drawChart(){
       const ctx = document.getElementById('pieChart');
-      const data = {
-        labels:this.poisoning_label,
-        datasets:[{
-          data: this.poisoning_value,
-          backgroundColor: [ 
-            'rgb(255, 148, 148)',
-            'rgb(169, 148, 255)',
-            'rgb(148, 210, 255)',
-            'rgb(255, 251, 148)',
-            'rgb(176, 255, 148)',
-          ],
-          hoverOffset: 4
-        }]
-      };
-      const pieChart = new Chart(ctx, {
+
+      pieChart= new Chart(ctx, {
         type: 'pie',
-        data: data,
+        data: {
+          labels:this.poisoning_label,
+          datasets:[{
+            data: this.poisoning_value,
+            backgroundColor: [ 
+              'rgb(255, 148, 148)',
+              'rgb(169, 148, 255)',
+              'rgb(148, 210, 255)',
+              'rgb(255, 251, 148)',
+              'rgb(176, 255, 148)',
+            ],
+            hoverOffset: 4
+          }]
+        },
         options: {
           responsive: false,
           elements:{ arc:{ borderColor:'#c4c4c4' }},
