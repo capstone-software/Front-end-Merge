@@ -6,7 +6,7 @@
   <div id="prob-chart">
     <div v-for="i in poisoning_value.length" :key="i">
       <div v-if="i-1==max_index()">
-        <router-link :to= "{path:'/'+ router_link[i-1]}"><button id='prob-btn' style="display:none"> 
+        <router-link :to= "{path:'/'+ router_link[i-1]}"><button id="prob-btn"> 
           <h2>{{poisoning_label[i-1]}}</h2>
           <p>{{poisoning_element[i-1]}}</p>
           <canvas id= "pieChart"> </canvas>
@@ -25,7 +25,7 @@ export default {
   name: "foodPoisoning",
   data() {
     return {
-      poisoning_value:[0,0,0,0,0], // 살모넬라, 병원성대장균, 노로바이러스, 캠필로박터제주니, 클로스트리디움퍼프린젠스 
+      poisoning_value:'', // 살모넬라, 병원성대장균, 노로바이러스, 캠필로박터제주니, 클로스트리디움퍼프린젠스 
       poisoning_label:[
         '살모넬라',
         '병원성대장균',
@@ -42,22 +42,28 @@ export default {
       router_link:['salmonella','ecoli','norovirus','jejuni','perfringens'],
     }
   },
+  // watch: {
+  //   poisoning_value:{
+  //     deep:true,
+  //     handler(){
+  //       this.drawChart();
+  //     }
+  //   },
+  // },
   mounted() {
-    this.drawChart();
     this.emitter.on('confirm-result', (weatherData)=> {
-      console.log(weatherData);
-      postWeather(JSON.stringify(weatherData))
-        .then(response => {
-          // 반환되는 값
-          if(response.status==200){
-            this.poisoning_value = response.data.floatList;
-            pieChart.data.datasets.data = this.poisoning_value;
-            //if(pieChart !== undefined){pieChart.destroy();}
-            //pieChart.update();
-          }
-          console.log(this.poisoning_value);
-        })
-        .catch(error => console.log(error));
+      if(weatherData){ 
+        postWeather(JSON.stringify(weatherData))
+          .then(response => {
+            if(response.status==200){
+              this.poisoning_value = response.data.floatList;
+              console.log(this.poisoning_value);
+              setTimeout(500);
+              this.drawChart();
+            }
+          })
+          .catch(error => console.log(error));
+      }
     })
   },
   methods: {
@@ -66,7 +72,7 @@ export default {
     },
     drawChart(){
       const ctx = document.getElementById('pieChart');
-
+      
       pieChart= new Chart(ctx, {
         type: 'pie',
         data: {
@@ -105,13 +111,11 @@ export default {
       this.emitter.emit('confirm-click');
     },
     buttonToggle(){
-      const button = document.getElementById('food-btn');
-      const chart = document.getElementById('prob-btn');
+      // const button = document.getElementById('food-btn');
+      // const chart = document.getElementById('prob-btn');
 
-      if(chart.style.display == 'none'){
-        chart.style.display = 'block';
-        button.style.display = 'none';
-      }
+      //document.getElementById('prob-btn').style.display = 'none';
+      //document.getElementById('food-btn').style.display = 'none';
     }
   } //methods
 }
