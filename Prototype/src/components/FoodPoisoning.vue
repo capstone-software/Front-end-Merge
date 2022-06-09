@@ -20,7 +20,6 @@
 import { postWeather } from '@/api/index';
 import Chart from "chart.js/auto";
 let pieChart;
-
 export default {
   name: "foodPoisoning",
   data() {
@@ -104,7 +103,6 @@ export default {
           }
         }
       });
-
       pieChart;
     },
     confirmClick() {
@@ -113,7 +111,6 @@ export default {
     buttonToggle(){
       // const button = document.getElementById('food-btn');
       // const chart = document.getElementById('prob-btn');
-
       //document.getElementById('prob-btn').style.display = 'none';
       //document.getElementById('food-btn').style.display = 'none';
     }
