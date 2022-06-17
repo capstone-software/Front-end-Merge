@@ -1,0 +1,37 @@
+<!-- 실행 : Alt+B -->
+<html>
+  <div class="overlay">
+    <div class="info">
+      <div class="title">
+        <details>
+          <summary>
+            <h3>${restName}</h3>
+          </summary>
+          <p>${restDesc}</p>
+        </details>
+      </div>
+      <div class="menu-table">
+        <table>
+          <th>name</th>
+          <th>price</th>
+          <th>tag</th>
+          <tr>
+            <td>${menuList[0].name}</td>
+            <td>${menuList[0].price}</td>
+            <td>${menuList[0].tagList}</td>
+          </tr>
+          <tr>
+            <td>${menuList[1].name}</td>
+            <td>${menuList[1].price}</td>
+            <td>${menuList[1].tagList}</td>
+          </tr>
+          <tr>
+            <td>${menuList[2].name}</td>
+            <td>${menuList[2].price}</td>
+            <td>${menuList[2].tagList}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</html>
