@@ -40,7 +40,13 @@ export default {
   },
   mounted() {
     "geolocation" in navigator?this.getPosition():console.log('Geolocation is not available');
-    window.kakao && window.kakao.maps?this.initMap():this.addKakaoMapScript();
+    if(window.kakao && window.kakao.maps){
+      setTimeout(() => {
+        kakao.maps.load(this.initMap);
+      }, 700);
+    } else{
+      this.addKakaoMapScript();
+    }
   },
   methods:{
     getPosition() {
@@ -59,7 +65,7 @@ export default {
       /* global kakao */
       script.onload = () => setTimeout(() => {
         kakao.maps.load(this.initMap);
-      }, 1000);
+      }, 700);
       script.src ="http://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey="
       +process.env.VUE_APP_KAKAOMAP_KEY;
       document.head.appendChild(script);
@@ -90,7 +96,7 @@ export default {
       let restMarker;
 
       // 데이터 받기
-      // restaurantList, menuList 받아옴
+      // restaurantList, menuList, dangerList 받아옴
 
       for(let i=0; i<this.restaurantPos.length; i++){
         let curPosition = new kakao.maps.LatLng(this.restaurantPos[i].lat,this.restaurantPos[i].lng);
@@ -120,6 +126,8 @@ export default {
               tagList: [ 0,1,0,0,0,0,1 ]
           }
         ];
+        // (살모넬라) -[ 유제품, 육류, 계란 ] 기준
+        let dangerList = [ 1,1,0,1,0,0,0 ];
         
         let overlay = new kakao.maps.CustomOverlay({
           //content: iwContent,
@@ -127,13 +135,13 @@ export default {
           yAnchor: 1
         });
 
-        this.initContent(overlay, this.serverData.data[i].name, this.serverData.data[i].description, menuList);
+        this.initContent(overlay, this.serverData.data[i].name, this.serverData.data[i].description, menuList, dangerList);
 
         kakao.maps.event.addListener(restMarker, 'click', this.openOverlay(this.curMap, overlay));
       }
       restMarker.setMap(this.curMap)
     },
-    initContent(overlay, restName, restDesc, menuList){
+    initContent(overlay, restName, restDesc, menuList, dangerList){
       let infoContent = document.createElement('div');
       infoContent.className = 'overlay';
 
@@ -167,7 +175,13 @@ export default {
         tableText += `<td>`
         for(let tag=1; tag<=7; tag++){
           if(menuList[menu].tagList[tag]===1){
-            tableText += `<span class="tag-${tag}">${tagName[tag]}</span>`
+            if(dangerList[tag]===1){
+              tableText += `<span class="tag-normal">${tagName[tag]}</span>`
+            } 
+            // else{
+            //   tableText += `<span class="tag-normal">${tagName[tag]}</span>`
+            // }
+            
           }
         }
         tableText +=`</td></tr>`
@@ -267,6 +281,7 @@ export default {
   text-align: left;
   border-collapse: collapse;
   font-size: 13px;
+  text-align: center;
 }
 .info th, td{
   padding: 5px 10px 5px 10px;  
@@ -277,13 +292,26 @@ export default {
   border-bottom: 2px solid #444444;
   font-size: 15px;
 }
-.tag-1{ padding: 2px; margin: 2.5px; background-color: pink; border-radius: 5px; }
+.tag-normal {
+  padding: 2px; 
+  margin: 1.5px; 
+  background-color: white; 
+  border-radius: 5px;
+}
+/* .tag-danger {
+  padding: 2px; 
+  margin: 1.5px; 
+  background-color: pink; 
+  border-radius: 5px;
+} */
+
+/* .tag-1{ padding: 2px; margin: 2.5px; background-color: pink; border-radius: 5px; }
 .tag-2{ padding: 2px; margin: 2.5px; background-color: paleturquoise; border-radius: 5px; }
 .tag-3{ padding: 2px; margin: 2.5px; background-color: rgb(255, 247, 175); border-radius: 5px; }
 .tag-4{ padding: 2px; margin: 2.5px; background-color: palegoldenrod; border-radius: 5px; }
 .tag-5{ padding: 2px; margin: 2.5px; background-color: rgb(147, 169, 242); border-radius: 5px; }
 .tag-6{ padding: 2px; margin: 2.5px; background-color: rgba(201, 252, 147, 0.871); border-radius: 5px; }
-.tag-7{ padding: 2px; margin: 2.5px; background-color: skyblue; border-radius: 5px; }
+.tag-7{ padding: 2px; margin: 2.5px; background-color: skyblue; border-radius: 5px; } */
 .info-close {
   position: absolute;
   top: 10px;

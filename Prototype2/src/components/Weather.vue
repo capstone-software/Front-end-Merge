@@ -133,9 +133,11 @@ export default {
         this.curLocation.address = 'Locating...';
 
         navigator.geolocation.getCurrentPosition(pos => {
-          this.curLocation.latitude = pos.coords.latitude.toString();
-          this.curLocation.longitude = pos.coords.longitude.toString();
-          resolve();
+          // this.curLocation.latitude = pos.coords.latitude.toString();
+          // this.curLocation.longitude = pos.coords.longitude.toString();
+          this.curLocation.latitude = 36.8334862;
+          this.curLocation.longitude = 127.179364;
+          resolve(pos);
         }, err => {
           this.curLocation.address = err.message;
         },
