@@ -51,11 +51,11 @@ export default {
   methods:{
     getPosition() {
       navigator.geolocation.getCurrentPosition(pos => {
-        // this.latitude = pos.coords.latitude;
-        // this.longitude = pos.coords.longitude;
-        this.longitude = 127.179364;
-        this.latitude = 36.8334862;
-        console.log(pos);
+        this.latitude = pos.coords.latitude;
+        this.longitude = pos.coords.longitude;
+        // this.longitude = 127.179364;
+        // this.latitude = 36.8334862;
+        // console.log(pos);
       }, err => {
         alert(err.message);
       })
@@ -158,7 +158,8 @@ export default {
 
         this.initContent(overlay, this.serverData.data[i].name, this.serverData.data[i].description, menuList[i], dangerList);
 
-        kakao.maps.event.addListener(restMarker, 'click', this.openOverlay(this.curMap, overlay));
+        kakao.maps.event.addListener(restMarker, 'click', this.openOverlay(this.curMap, overlay, curPosition));
+        // kakao.maps.event.addListener(restMarker, 'click', this.openOverlay(this.curMap, overlay));
       }
       restMarker.setMap(this.curMap)
     },
@@ -194,10 +195,10 @@ export default {
       for(let menu=0;menu<menuList.length;menu++){
         tableText += `<tr> <td>${menuList[menu].name}</td><td>${menuList[menu].price}</td>`;
         tableText += `<td>`
-        for(let tag=1; tag<=7; tag++){
+        for(let tag=0; tag<7; tag++){
           if(menuList[menu].tagList[tag]===1){
             if(dangerList[tag]===1){
-              tableText += `<span class="tag-normal">${tagName[tag]}</span>`
+              tableText += `<span class="tag-danger">${tagName[tag]}</span>`
             } 
             // else{
             //   tableText += `<span class="tag-normal">${tagName[tag]}</span>`
@@ -212,8 +213,12 @@ export default {
 
       overlay.setContent(infoContent);
     },
-    openOverlay(map, overlay){
-      return ()=>overlay.setMap(map);
+    openOverlay(map, overlay, markerPos){
+      return ()=>{
+        overlay.setMap(map);
+        let move = new kakao.maps.LatLng(markerPos.Ma+0.001, markerPos.La);
+        map.setCenter(move);
+      }
     },
     closeOverlay(overlay){
       overlay.setMap(null);
@@ -301,7 +306,7 @@ export default {
   text-align: left;
   border-collapse: collapse;
   font-size: 13px;
-  text-align: center;
+  /* text-align: center; */
 }
 .info th, td{
   padding: 5px 10px 5px 10px;  
@@ -321,7 +326,7 @@ export default {
 .tag-danger {
   padding: 2px; 
   margin: 1.5px; 
-  background-color: pink; 
+  background-color: white; 
   border-radius: 5px;
 }
 /* .tag-1{ padding: 2px; margin: 2.5px; background-color: pink; border-radius: 5px; }
