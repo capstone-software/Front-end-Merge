@@ -133,11 +133,11 @@ export default {
         this.curLocation.address = 'Locating...';
 
         navigator.geolocation.getCurrentPosition(pos => {
-          // this.curLocation.latitude = pos.coords.latitude.toString();
-          // this.curLocation.longitude = pos.coords.longitude.toString();
-          this.curLocation.latitude = 36.8334862;
-          this.curLocation.longitude = 127.179364;
-          resolve(pos);
+          this.curLocation.latitude = pos.coords.latitude.toString();
+          this.curLocation.longitude = pos.coords.longitude.toString();
+          // this.curLocation.latitude = 36.8334862;
+          // this.curLocation.longitude = 127.179364;
+          resolve();
         }, err => {
           this.curLocation.address = err.message;
         },
@@ -263,9 +263,9 @@ export default {
 
       getUltraNcst(date, time, rs.x, rs.y)
         .then(response => {
-          /*if(response.data.response.header.resultCode!=='00'){
+          if(response.data.response.header.resultCode!=='00'){
             console.log(`ERROR: ${response.data.response.header.resultMsg}`);
-          }*/
+          }
           parse_item = response.data.response.body.items.item;
           this.postWeatherData.avgRhm = parseFloat(parse_item[1].obsrValue);
           this.postWeatherData.sumRn = parseFloat(parse_item[2].obsrValue);
@@ -273,17 +273,11 @@ export default {
           this.postWeatherData.avgWs = parseFloat(parse_item[7].obsrValue);
           this.postWeatherData.lowTa = parseFloat(this.weather.tmn);
           this.postWeatherData.highTa = parseFloat(this.weather.tmx);
+
+          this.emitter.emit('confirm-result',this.postWeatherData);
         })
         .catch(error => console.log(error));
     },
-    // pushWeather(){
-    //   postWeather(JSON.stringify(this.postWeatherData))
-    //     .then(response => {
-    //       console.log(response.status);
-    //       console.log(response.data);
-    //     })
-    //     .catch(error => console.log(error));
-    // },
     async Initialize(){
       await this.getPosition()
       await this.getAddress()
@@ -298,25 +292,11 @@ export default {
 
     this.emitter.on('confirm-click', ()=> {
       this.getNcstWeather();
-      this.emitter.emit('confirm-result',this.postWeatherData);
     });
   },
   mounted(){
   
   },
-  /*
-  watch: {
-    curLocation:{
-      deep:true,
-      handler(){
-        this.getAddress(); 
-        this.getWeather();
-      }
-    },
-    'curLocation.code'(){
-      this.getFoodIndi();
-    }
-  },*/
 };
 
 </script>

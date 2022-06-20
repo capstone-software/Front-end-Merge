@@ -44,18 +44,19 @@ export default {
   },
   mounted() {
     this.emitter.on('confirm-result', (weatherData)=> {
-      if(weatherData){ 
+      if(weatherData.avgTa){ 
         console.log(weatherData);
         postWeather(JSON.stringify(weatherData))
           .then(async response => {
             if(response.status==200){
               this.poisoning_value = await response.data.floatList;
               setTimeout(() => {
-                if (pieChart) {
+                if(pieChart) {
                   pieChart.destroy();
                 }
+                pieChart;
                 this.drawChart(this.poisoning_value);
-              }, 2000);
+              }, 500);
             }
           })
           .catch(error => console.log(error));
@@ -100,8 +101,6 @@ export default {
           }
         }
       });
-
-      pieChart;
     },
     confirmClick() {
       this.emitter.emit('confirm-click');
