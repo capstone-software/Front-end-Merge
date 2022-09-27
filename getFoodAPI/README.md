@@ -9,3 +9,10 @@
 
 ### 3. @/components/Map.vue
    - api 받아오는 함수 사용
+
+### 4. .env.local
+   ```
+   # 식품안전나라api serviceKey 등록
+   VUE_APP_FOODSAFETYAPI_KEY = 인증키
+   VUE_APP_FOODSAFETYAPI_KEY = 인증키
+   ```
