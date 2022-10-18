@@ -2,7 +2,7 @@
   <h3> 오늘의 식중독 예방 병원균 </h3>
   <foodPoisoning />
   <weatherComp />
-  <mapPrint />   
+  <mapPrint />
 </template> 
 
 <script>
